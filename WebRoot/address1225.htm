@@ -1,0 +1,211 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>获取位置</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <script src="http://api.map.baidu.com/api?v=2.0&ak=61f8bd72d68aef3a7b66537761d29d82"></script>
+    <script>
+        function G(id) {
+            return document.getElementById(id)
+        }
+        function getRequest(s) {
+            var c, r = {}, s = s || location.search, a = s.match(/\w+=[^&]*/g) || [];
+            for (var i = 0; i < a.length; i++) {
+                c = a[i].split('=');
+                r[decodeURIComponent(c[0])] = decodeURIComponent(c[1] || '');
+            }
+            return r;
+        }
+
+        Request = getRequest();
+
+        Page = {
+            point: { lng: 113.994915, lat: 22.576988, zoom: 11 },//默认位置(深圳)
+            init: function () {
+
+                var p = this.point, o = G('address');
+                o.value = Request.address || '';
+                o.kw = o.value;
+
+                map = new BMap.Map('mapbox');
+                map.addControl(new BMap.NavigationControl({ anchor: BMAP_ANCHOR_TOP_RIGHT }));
+
+                var point = new BMap.Point(p.lng, p.lat);
+                map.centerAndZoom(point, p.zoom);
+
+                geoc = new BMap.Geocoder();
+                local = new BMap.LocalSearch(map, {
+                    onSearchComplete: function (r) {
+                        Page.onSearch(r);
+                    }
+                });
+
+                marker = new BMap.Marker(point);
+                marker.setAnimation(BMAP_ANIMATION_BOUNCE);
+                map.addOverlay(marker);
+                setTimeout(function () { marker.hide() }, 30);
+
+                if (Request.lng) {
+                    setTimeout(function () {
+                        Page.setMarker(new BMap.Point(Number(Request.lng), Number(Request.lat)));
+                    }, 100);
+                } else if (Request.address) {
+                    geoc.getPoint(Request.address, function (point) {
+                        if (point) {
+                            Page.setMarker(point);
+                        } else {
+                            alert('未找到地址：' + address);
+                        }
+                    });
+                }
+
+                this.initSearch();
+
+                map.addEventListener("click", function (e) {
+                    var pt = e.point;
+                    geoc.getLocation(pt, function (rs) {
+                        if (rs && rs.address) {
+                            Page.setMarker(rs.point, true);
+                            map.setCenter(rs.point);
+                            G('address').value = rs.address;
+                            G('querys').style.display = 'none';
+                            G('submit').style.display = '';
+                        } else {
+                            alert('找不到对应地址');
+                        }
+                    });
+                });
+
+                if (!localStorage["map_tip"]) G('xtip').style.display = '';
+            },
+            initSearch: function () {
+                var input = G('address');
+                input.onclick = function (e) {
+                    this.select();
+                }
+                input.onkeydown = function (e) {
+                    e = e || event;
+                    var n = e.keyCode;
+                    if (n != 38 && n != 40) return;
+                    var c, p = Page.lastQuery, b = n == 40, o = G('querys'), a = o.children, m = a.length;
+                    if (!m || o.style.display == 'none') return;
+                    if (!p) p = a[m - 1];
+                    o = p[b ? 'nextSibling' : 'previousSibling'];
+                    if (!o) o = (b ? a[0] : a[m - 1]);
+                    p.className = p.className.replace(' on', '');
+                    o.className = o.className + ' on';
+                    Page.changeAddress(o);
+                }
+                input.onkeyup = function (e) {
+                    e = e || event;
+                    var n = e.keyCode;
+                    if (n == 13) {
+                        if (marker.isVisible()) {
+                            G('querys').style.display = 'none';
+                            G('address').select();
+                        }
+                        return;
+                    }
+
+                    if (n >= 37 && n <= 40) return;
+
+                    var kw = this.value, b = kw != this.kw;
+                    if (!kw || b) Page.hideMarker();
+                    if (kw && b) local.search(kw);
+                    if (!kw) G('querys').style.display = 'none';
+                    this.kw = kw;
+                }
+            },
+            onSearch: function (r) {
+                if (r.keyword != G('address').kw) return;
+                var c, s = '', o = G('querys'), a = r.wr || [];
+                for (var i = 0; i < a.length; i++) {
+                    c = a[i];
+                    d = c.point;
+                    s += '<li data="' + [d.lng, d.lat] + '" onclick="Page.changeAddress(this,1)"><label>' + c.address + '</label><p>' + c.title + '</p></li>';
+                }
+                o.innerHTML = s;
+                o.style.display = s ? '' : 'none';
+                this.lastQuery = null;
+            },
+            changeAddress: function (o, b) {
+                this.lastQuery = o;
+                var p, c = G('address');
+                c.value = o ? o.children[0].innerHTML : c.kw;
+                if (o && (c = o.getAttribute('data'))) {
+                    c = c.split(',');
+                    p = new BMap.Point(Number(c[0]), Number(c[1]));
+                    this.setMarker(p);
+                }
+                if (b) G('querys').style.display = 'none';
+            },
+            setMarker: function (point, fixed) {
+                marker.setPosition(point);
+                marker.show();
+                if (!fixed)
+                    map.setCenter(point);
+                var zoom = map.getZoom();
+                if (zoom < 15)
+                    map.setZoom(15);
+                G('submit').style.display = '';
+            },
+            hideMarker: function () {
+                var p = Page.point;
+                map.centerAndZoom(new BMap.Point(p.lng, p.lat), p.zoom);
+                marker.hide();
+                G('submit').style.display = 'none';
+            },
+            hideTip: function () {
+                localStorage["map_tip"] = 1;
+                G('xtip').style.display = 'none';
+            },
+            submit: function () {
+                if (Request.callback) {
+                    var c, a = Request.callback.split('.'), f = parent;
+                    while (c = a.shift())
+                        f = f[c];
+
+                    var p = marker.getPosition();
+                    f({ lng: p.lng, lat: p.lat, address: G('address').value });
+                } else {
+                    alert('请将当前页面用iframe的形式嵌入，并传入callback参数，确认后会将数据回传过去');
+                }
+            }
+        }
+
+        window.onload = function () {
+            Page.init();
+        }
+    </script>
+    <style type="text/css">
+        body, html { width: 100%; height: 100%; overflow: hidden; margin: 0; padding: 0; font-size: 14px; font-family: "微软雅黑"; }
+        a { color: #06c; }
+
+        #mapbox { width: 100%; height: 100%; overflow: hidden; }
+        #top { position: absolute; top: 10px; left: 10px; width: 360px; min-height: 40px; background: #fff; border: 1px solid #ccc; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+        #address { width: 340px; height: 40px; padding: 0 10px; font-size: 13px; color: #000; border: 0; outline: none; }
+        #querys { margin: 0; padding: 0; }
+        #querys li { padding: 3px 10px; list-style: none; margin: 0; border-top: 1px solid #eee; cursor: pointer; }
+        #querys li.on { background: #eee; }
+        #querys li label { color: #333; font-size: 12px; }
+        #querys li p { color: #aaa; font-size: 12px; margin: 0; }
+        #submit { position: absolute; top: 0; right: 0; line-height: 40px; padding: 0 20px; background: #f60; color: #fff; cursor: pointer; font-size: 14px; }
+        #xtip { position: absolute; top: 60px; left: 10px; width: 360px; min-height: 40px; background: #ffc; border: 1px solid #ccc; }
+        #xtip div { padding: 10px; font-size: 12px; color: red; }
+    </style>
+</head>
+<body>
+    <div id="mapbox"></div>
+    <div id="xtip" style="display: none;">
+        <div>
+            小提示：地图上跳动的小红点就是当前工厂位置。如果工厂位置不对，请拖动或者缩放地图，找到正确的工厂位置后，点击地图上工厂，出现跳动的小红点后，点击确认按钮即可。
+            <a href="javascript:Page.hideTip()">[不再提示]</a>
+        </div>
+    </div>
+    <div id="top">
+        <input id="address" placeholder="请搜索或者点击地图上的工厂地址">
+        <div id="submit" style="display: none" onclick="Page.submit()">确认</div>
+        <ul id="querys"></ul>
+    </div>
+</body>
+</html>

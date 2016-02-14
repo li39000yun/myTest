@@ -1,0 +1,29 @@
+@CHARSET "UTF-8";
+
+.frm {
+	width: 800px;
+	height: 700px;
+	background-color: gray;
+	margin: 0px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.center {
+	width: 800px;
+	height: 700px;
+	background-color: gray;
+	margin: 0px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.north {
+	width: 800px;
+	height: 100px;
+	background-color:yellow;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+	color: blue;
+}

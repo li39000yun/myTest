@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>jQuery EasyUI</title>
+<link rel="stylesheet" type="text/css" href="http://www.jeasyui.net/Public/js/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="http://www.jeasyui.net/Public/js/easyui/themes/icon.css">
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.4.2.min.js"></script>
+<script type="text/javascript" src="http://www.jeasyui.net/Public/js/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript">
+	$(function(){
+		$('#dd').dialog({   
+		    title: 'My Dialog',   
+		    width: 400,   
+		    height: 200,   
+		    closed: false,   
+		    cache: false,   
+		    modal: true,
+		    toolbar : [{
+				text:'Edit',
+				iconCls:'icon-edit',
+				handler:function(){alert('edit')}
+			},{
+				text:'Help',
+				iconCls:'icon-help',
+				handler:function(){alert('help')}
+			}],
+			buttons:[{
+				text:'Save',
+				handler:function(){alert('svae')}
+			},{
+				text:'Close',
+				handler:function(){alert('close')}
+			}]
+		});
+		
+		$.messager.alert('Warning','The warning message');   
+		$.messager.confirm('Confirm','Are you sure you want to delete record?',function(r){   
+		    if (r){   
+		        alert('ok');   
+		    }   
+		});
+		$.messager.show({
+			title:'My Title',
+			msg:'Message will be closed after 5 seconds.',
+			timeout:5000,
+			showType:'slide'
+		});
+	});
+</script>
+</head>
+<body>
+	aaa
+	<div id="dd">Dialog Content.</div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MyHtml.html</title>
+<meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
+<meta http-equiv="description" content="this is my page">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+	<link href="xwin/xwin.css" rel="stylesheet" />
+	<script src="xwin/xwin.js"></script>
+	<style>
+body,html {
+	font-size: 12px;
+}
+</style>
+
+	<script>
+		function G(id) {
+			return document.getElementById(id)
+		}
+
+		function showMap() {
+			var win = this.win_map;
+			if (!win) {
+				win = new XWin({
+					title : '选择位置',
+					width : 700,
+					content : '<div id="frm"></div>'
+				});
+				this.win_map = win;
+			}
+			var address = encodeURIComponent(G('address').value);
+			G('frm').innerHTML = '<iframe class="frm" src="address1225.htm?callback=setAddress&address=' + address + '&lng=116.403955&lat=39.91518" frameborder="no" style="width:100%;height:400px;"></iframe>';
+			win.show();
+		}
+
+		function setAddress(r) {
+			G('address').value = r.address+'-'+r.lng+'-'+r.lat || '';
+			win_map.hide();
+		}
+	</script>
+
+	<div style="padding:20px">
+		装货地址：<input id="address" value="中关村soho" style="width:300px;"> <a href="javascript:showMap()">选择</a>
+	</div>
+</body>
+</html>
